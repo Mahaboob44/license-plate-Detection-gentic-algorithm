@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+venv/
+.venv/
+*.egg-info/
+.idea/
+.vscode/
+output/*.png
+data/sample_images/*
+!data/sample_images/.gitkeep
+models/*.pth
+*.db
+.DS_Store

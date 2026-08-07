@@ -1,0 +1,62 @@
+[
+  {
+    "license_plate": "RJ14CY0002",
+    "owner_name": "Rohit Sharma",
+    "phone_number": "9876543210",
+    "occupation": "Engineer",
+    "rc_number": "RC001",
+    "license_validity": "2025-12-31",
+    "area": "Jaipur",
+    "violations": ["Signal Jumping"],
+    "total_fines": 500,
+    "status": "Unpaid"
+  },
+  {
+    "license_plate": "MH20EE7602",
+    "owner_name": "Ananya Rao",
+    "phone_number": "9876543211",
+    "occupation": "Doctor",
+    "rc_number": "RC002",
+    "license_validity": "2026-06-30",
+    "area": "Bengaluru",
+    "violations": ["Speeding"],
+    "total_fines": 1000,
+    "status": "Unpaid"
+  },
+  {
+    "license_plate": "DL7C01939",
+    "owner_name": "Veerendra Prasad",
+    "phone_number": "9876543212",
+    "occupation": "Student",
+    "rc_number": "RC003",
+    "license_validity": "2025-09-15",
+    "area": "Kurnool",
+    "violations": [],
+    "total_fines": 0,
+    "status": "Paid"
+  },
+  {
+    "license_plate": "AP16BX1234",
+    "owner_name": "Veerendra Prasad",
+    "phone_number": "9876543212",
+    "occupation": "Student",
+    "rc_number": "RC004",
+    "license_validity": "2026-01-20",
+    "area": "Kurnool",
+    "violations": [],
+    "total_fines": 500,
+    "status": "Unpaid"
+  },
+  {
+    "license_plate": "KA03AB1234",
+    "owner_name": "Ananya Rao",
+    "phone_number": "9876543211",
+    "occupation": "Doctor",
+    "rc_number": "RC005",
+    "license_validity": "2026-03-10",
+    "area": "Bengaluru",
+    "violations": ["Speeding"],
+    "total_fines": 1000,
+    "status": "Unpaid"
+  }
+]
