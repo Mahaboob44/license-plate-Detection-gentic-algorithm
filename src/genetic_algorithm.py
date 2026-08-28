@@ -80,7 +80,22 @@ class GeneticPlateLocator:
         y = random.randint(0, max(0, self.height - h - 1))
         return (x, y, w, h)
 
-    def _init_population(self) -> List[Chromosome]:
+    def _seed_chromosome(self, candidates: list) -> Chromosome:
+        """Bias a chromosome toward a real edge-based candidate region
+        instead of pure uniform randomness, when candidates are available."""
+        if not candidates or random.random() > 0.6:
+            return self._random_chromosome()
+        cx, cy, cw, ch = random.choice(candidates)
+        jitter = lambda v, spread: v + random.randint(-spread, spread)
+        x = jitter(cx, 10)
+        y = jitter(cy, 10)
+        w = jitter(cw, 15)
+        h = jitter(ch, 8)
+        return self._clip((x, y, w, h))
+
+    def _init_population(self, candidates: list | None = None) -> List[Chromosome]:
+        if candidates:
+            return [self._seed_chromosome(candidates) for _ in range(self.cfg.population_size)]
         return [self._random_chromosome() for _ in range(self.cfg.population_size)]
 
     def _clip(self, chromosome: Chromosome) -> Chromosome:
@@ -155,8 +170,8 @@ class GeneticPlateLocator:
     # ------------------------------------------------------------------ #
     # Main loop
     # ------------------------------------------------------------------ #
-    def run(self, gray: np.ndarray, edges: np.ndarray) -> GAResult:
-        population = self._init_population()
+    def run(self, gray: np.ndarray, edges: np.ndarray, candidates: list | None = None) -> GAResult:
+        population = self._init_population(candidates)
         history: List[float] = []
         best_box: Chromosome = population[0]
         best_fitness = -np.inf

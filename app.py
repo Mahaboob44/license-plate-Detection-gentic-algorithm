@@ -19,6 +19,16 @@ from src import database as db
 from src import ocr_engine
 from src.genetic_algorithm import GAConfig, GeneticPlateLocator
 from src.preprocessing import canny_edges, to_grayscale
+from src.preprocessing import get_plate_candidates
+import re
+
+PLATE_PATTERN = re.compile(r'^[A-Z]{2}\d{1,2}[A-Z]{0,3}\d{4}$')
+
+def validate_plate_text(text):
+    if not text:
+        return False
+    cleaned = text.replace(" ", "").replace("-", "").upper()
+    return bool(PLATE_PATTERN.match(cleaned))
 
 st.set_page_config(page_title="ALPR — GA + Neural Network", page_icon="🚗", layout="wide")
 
@@ -47,24 +57,40 @@ with col_img:
         bgr = np.array(pil_img)[:, :, ::-1].copy()
 
         run_detect = st.button("🔍 Detect License Plate (GA + NN)", type="primary")
-
+        
         if run_detect:
             with st.spinner("Running Genetic Algorithm to localize plate..."):
                 gray = to_grayscale(bgr)
                 edges = canny_edges(gray)
+                candidates = get_plate_candidates(bgr, edges)
                 locator = GeneticPlateLocator(image_shape=gray.shape, config=GAConfig())
-                result = locator.run(gray, edges)
+                result = locator.run(gray, edges, candidates=candidates)
                 x, y, w, h = result.best_box
                 st.session_state.detected_box = (x, y, w, h)
                 st.session_state.fitness_info = (result.best_fitness, result.generations_run)
 
             with st.spinner("Running Neural Network OCR..."):
-                plate_region = bgr[y:y + h, x:x + w]
+                plate_region = bgr[y:y+h, x:x+w]
                 try:
                     plate_text = ocr_engine.recognize(plate_region)
                 except Exception as exc:
                     st.warning(f"OCR engine unavailable in this environment ({exc}).")
                     plate_text = None
+
+                if not validate_plate_text(plate_text):
+                    for cand in candidates[:8]:
+                        cx, cy, cw, ch = cand
+                        alt_region = bgr[cy:cy+ch, cx:cx+cw]
+                        try:
+                            alt_text = ocr_engine.recognize(alt_region)
+                        except Exception:
+                            continue
+                        if validate_plate_text(alt_text):
+                            plate_text = alt_text
+                            x, y, w, h = cand
+                            st.session_state.detected_box = (x, y, w, h)
+                            break
+
                 st.session_state.detected_plate = plate_text
 
         display_img = pil_img.copy()

@@ -1,46 +1,29 @@
-"""
-Image acquisition & preprocessing
-==================================
-Mirrors Section 4.1 / 4.2 of the project report:
-    - Grayscale conversion   : Gray = 0.2989R + 0.5870G + 0.1140B
-    - Canny edge detection   : E = Canny(I_gray)
-"""
-
-import cv2
-import numpy as np
-
-
-def load_image(path: str) -> np.ndarray:
-    """Load an image from disk as a BGR numpy array."""
-    img = cv2.imread(path)
-    if img is None:
-        raise FileNotFoundError(f"Could not read image: {path}")
-    return img
-
-
-def to_grayscale(image_bgr: np.ndarray) -> np.ndarray:
+def get_plate_candidates(image_bgr: np.ndarray, edges: np.ndarray = None) -> list:
     """
-    Convert a BGR image to grayscale using the same weighting the report
-    specifies: Gray = 0.2989 R + 0.5870 G + 0.1140 B
+    Locate plate-shaped candidate regions from the edge map produced by
+    canny_edges(). Used to seed the GA search space so it doesn't waste
+    generations exploring badges, stickers, or other non-plate text.
+
+    Returns a list of (x, y, w, h) boxes, sorted largest-area first.
     """
-    b, g, r = cv2.split(image_bgr.astype(np.float64))
-    gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
-    return np.clip(gray, 0, 255).astype(np.uint8)
+    if edges is None:
+        gray = to_grayscale(image_bgr)
+        edges = canny_edges(gray)
 
+    contours, _ = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
-def denoise(gray: np.ndarray) -> np.ndarray:
-    """Light Gaussian blur to reduce noise before edge detection."""
-    return cv2.GaussianBlur(gray, (5, 5), 0)
+    img_h, img_w = edges.shape[:2]
+    candidates = []
 
+    for c in contours:
+        x, y, w, h = cv2.boundingRect(c)
+        if h == 0:
+            continue
+        aspect = w / float(h)
 
-def canny_edges(gray: np.ndarray, low: int = 80, high: int = 200) -> np.ndarray:
-    """Apply Canny edge detection to highlight high-frequency regions."""
-    smoothed = denoise(gray)
-    return cv2.Canny(smoothed, low, high)
+        # Indian plates are roughly 4.5:1 to 5.5:1
+        if 2.5 < aspect < 6.0 and w > 0.08 * img_w and h > 0.02 * img_h:
+            candidates.append((x, y, w, h))
 
-
-def preprocess(image_bgr: np.ndarray):
-    """Convenience wrapper returning (gray, edges) for a BGR image."""
-    gray = to_grayscale(image_bgr)
-    edges = canny_edges(gray)
-    return gray, edges
+    candidates.sort(key=lambda b: b[2] * b[3], reverse=True)
+    return candidates[:20]
