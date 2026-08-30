@@ -1,3 +1,14 @@
+import cv2
+import numpy as np
+
+def to_grayscale(image_bgr: np.ndarray) -> np.ndarray:
+    """Convert a BGR image to grayscale."""
+    return cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
+
+def canny_edges(gray: np.ndarray) -> np.ndarray:
+    """Run Canny edge detection on a grayscale image."""
+    return cv2.Canny(gray, 100, 200)
+    
 def get_plate_candidates(image_bgr: np.ndarray, edges: np.ndarray = None) -> list:
     """
     Locate plate-shaped candidate regions from the edge map produced by
